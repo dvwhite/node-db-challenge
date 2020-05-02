@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const { get, getById, insert } = require("./project-model");
+const { getByProjectId } = require("./../tasks/task-model");
 
 router.get("/", async (req, res) => {
   try {
@@ -20,10 +21,12 @@ router.get("/:id", validateProjectId, async (req, res) => {
   try {
     const id = Number(req.params.id);
     const project = convertCompleted(await getById(id));
+    const tasks = convertCompleted(await getByProjectId(id))
+    const convTasks = objectToArray(tasks).map(task => convertCompleted(task));
     res.status(200).json({
       message: "Success",
       validation: [],
-      data: project,
+      data: {...project, tasks: convTasks}
     });
   } catch (err) {
     errDetail(res, err);
@@ -77,6 +80,10 @@ function convertCompleted(obj) {
     ...obj,
     completed: obj.completed === 0 ? false : true,
   };
+}
+
+function objectToArray(obj) {
+  return Object.values(obj);
 }
 
 module.exports = router;
