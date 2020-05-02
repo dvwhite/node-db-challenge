@@ -4,7 +4,7 @@ const router = express.Router();
 const {
   get,
   insert
-} = require("./tasks-model");
+} = require("./task-model");
 
 router.get("/", async (req, res) => {
   try {

@@ -1,10 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const {
-  get,
-  insert
-} = require("./project-model");
+const { get, getById, insert } = require("./project-model");
 
 router.get("/", async (req, res) => {
   try {
@@ -12,7 +9,21 @@ router.get("/", async (req, res) => {
     res.status(200).json({
       message: "Success",
       validation: [],
-      data: projects
+      data: projects.map((project) => convertCompleted(project)),
+    });
+  } catch (err) {
+    errDetail(res, err);
+  }
+});
+
+router.get("/:id", validateProjectId, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const project = convertCompleted(await getById(id));
+    res.status(200).json({
+      message: "Success",
+      validation: [],
+      data: project,
     });
   } catch (err) {
     errDetail(res, err);
@@ -21,16 +32,34 @@ router.get("/", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    const newProject = await insert(req.body);
+    const newProject = convertCompleted(await insert(req.body));
     res.status(200).json({
       message: "Success",
       validation: [],
-      data: newProject
+      data: newProject,
     });
   } catch (err) {
-    errDetail(res, err)
+    errDetail(res, err);
   }
-})
+});
+
+// Middlewarae
+async function validateProjectId(req, res, next) {
+  try {
+    const id = Number(req.params.id);
+    const project = await getById(id);
+    if (!project) {
+      return res.status(400).json({
+        message: "Bad Request",
+        validation: ["Project id doesn't exist"],
+        data: {},
+      });
+    }
+    next();
+  } catch (err) {
+    errDetail(res, err);
+  }
+}
 
 function errDetail(res, err) {
   console.log(err);
@@ -39,6 +68,15 @@ function errDetail(res, err) {
     validation: [],
     data: {},
   });
+}
+
+// Helpers
+function convertCompleted(obj) {
+  // Convert a 0 to false or a 1 to true
+  return {
+    ...obj,
+    completed: obj.completed === 0 ? false : true,
+  };
 }
 
 module.exports = router;
