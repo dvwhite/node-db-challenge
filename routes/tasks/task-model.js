@@ -21,7 +21,11 @@ function get() {
 }
 
 function getById(task_id) {
-  return db("tasks as p").where({ "p.id": task_id }).first();
+  return db("tasks as t")
+    .leftJoin("tasks_contexts as tc", "t.id", "tc.task_id")
+    .leftJoin("contexts as c", "c.id", "tc.context_id")
+    .where({ "t.id": task_id })
+    .first();
 }
 
 function getByProjectId(project_id) {
