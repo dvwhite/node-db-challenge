@@ -1,10 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const {
-  get,
-  insert
-} = require("./resource-model");
+const { get, getById, insert } = require("./resource-model");
 
 router.get("/", async (req, res) => {
   try {
@@ -12,7 +9,21 @@ router.get("/", async (req, res) => {
     res.status(200).json({
       message: "Success",
       validation: [],
-      data: resources
+      data: resources.map((resource) => convertCompleted(resource)),
+    });
+  } catch (err) {
+    errDetail(res, err);
+  }
+});
+
+router.get("/:id", validateResourceId, async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const resource = convertCompleted(await getById(id));
+    res.status(200).json({
+      message: "Success",
+      validation: [],
+      data: resource,
     });
   } catch (err) {
     errDetail(res, err);
@@ -21,16 +32,34 @@ router.get("/", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    const newResource = await insert(req.body);
+    const newResource = convertCompleted(await insert(req.body));
     res.status(200).json({
       message: "Success",
       validation: [],
-      data: newResource
+      data: newResource,
     });
   } catch (err) {
-    errDetail(res, err)
+    errDetail(res, err);
   }
-})
+});
+
+// Middlewarae
+async function validateResourceId(req, res, next) {
+  try {
+    const id = Number(req.params.id);
+    const resource = await getById(id);
+    if (!resource) {
+      return res.status(400).json({
+        message: "Bad Request",
+        validation: ["resource id doesn't exist"],
+        data: {},
+      });
+    }
+    next();
+  } catch (err) {
+    errDetail(res, err);
+  }
+}
 
 function errDetail(res, err) {
   console.log(err);
@@ -39,6 +68,15 @@ function errDetail(res, err) {
     validation: [],
     data: {},
   });
+}
+
+// Helpers
+function convertCompleted(obj) {
+  // Convert a 0 to false or a 1 to true
+  return {
+    ...obj,
+    completed: obj.completed === 0 ? false : true,
+  };
 }
 
 module.exports = router;
