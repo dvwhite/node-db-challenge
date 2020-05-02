@@ -3,6 +3,7 @@ const router = express.Router();
 
 const { get, getById, insert } = require("./project-model");
 const { getByProjectId } = require("./../tasks/task-model");
+const rdb = require("./../../routes/resources/resource-model");
 
 router.get("/", async (req, res) => {
   try {
@@ -23,10 +24,11 @@ router.get("/:id", validateProjectId, async (req, res) => {
     const project = convertCompleted(await getById(id));
     const tasks = convertCompleted(await getByProjectId(id))
     const convTasks = objectToArray(tasks).map(task => convertCompleted(task));
+    const resources = objectToArray(await rdb.getByProjectId(id));
     res.status(200).json({
       message: "Success",
       validation: [],
-      data: {...project, tasks: convTasks}
+      data: {...project, resources, tasks: convTasks}
     });
   } catch (err) {
     errDetail(res, err);
