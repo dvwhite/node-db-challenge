@@ -7,14 +7,20 @@ module.exports = {
 };
 
 function get() {
-  return db("tasks");
+  return db("tasks as t")
+    .select([
+      "t.id",
+      "t.description",
+      "t.notes",
+      "t.completed",
+      db.raw("p.name AS project_name"),
+      db.raw("p.description as project_description"),
+    ])
+    .leftJoin("projects as p", "p.id", "t.project_id");
 }
 
 function getById(task_id) {
-  return db("tasks as p")
-    .where({ "p.id": task_id })
-    .first();
-    
+  return db("tasks as p").where({ "p.id": task_id }).first();
 }
 
 function insert(task) {
@@ -23,5 +29,5 @@ function insert(task) {
     .insert({ description, notes, completed, project_id })
     .then((ids) => {
       return getById(ids[0]);
-    })
+    });
 }
