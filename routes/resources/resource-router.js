@@ -51,7 +51,7 @@ async function validateResourceId(req, res, next) {
     if (!resource) {
       return res.status(400).json({
         message: "Bad Request",
-        validation: ["resource id doesn't exist"],
+        validation: ["Resource id doesn't exist"],
         data: {},
       });
     }
